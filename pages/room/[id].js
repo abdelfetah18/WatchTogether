@@ -1,9 +1,11 @@
-export default function Room() {
+import Youtube from "../../Components/Youtube";
+
+export default function Room({ platform }) {
     return (
       <div className="flex flex-row w-screen h-screen items-center">
         <div className="w-4/5 h-full flex flex-col items-center justify-center bg-black">
           <div className="w-full h-4/5">
-          <iframe className="w-full h-full" src="https://www.youtube.com/embed/aSf_1wm85dQ" title="Ayanokoji Kiyotaka− Love And War 🔥💎 [EDIT/AMV] | Classroom of the elite" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <Youtube url={"https://www.youtube.com/watch?v=aSf_1wm85dQ"} />
           </div>
         </div>
         <div className="w-1/5 bg-gray-800 h-full flex flex-col items-center">

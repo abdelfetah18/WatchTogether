@@ -1,0 +1,40 @@
+Watch-together:
+	accounts
+	rooms
+
+
+accounts:
+	username
+	email
+	password
+	bio
+
+rooms:
+	name
+	profile_picture
+	bio
+	video_player
+	members
+	chat
+
+
+
+Pages:
+	- Home
+	- Sign In
+	- Sign Up
+	- RoomId
+	- Search
+
+
+master -> ( 
+
+			- user_1
+			- user_2
+		)
+
+
+eventName,payload
+payload: { action:"play", data:{
+	videoID,url,etc...
+} }
