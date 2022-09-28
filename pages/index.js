@@ -1,4 +1,5 @@
-import { FaSignInAlt,FaSignOutAlt,FaUsers,FaSync,FaSmile,FaArrowDown,FaYoutube } from "react-icons/fa"
+import Link from "next/link"
+import { FaSignInAlt,FaSignOutAlt,FaUsers,FaSync,FaSmile,FaArrowDown,FaYoutube,FaFacebook,FaTwitter,FaInstagram } from "react-icons/fa"
 
 export default function Home() {
   return (
@@ -9,7 +10,9 @@ export default function Home() {
           <div className="text-white font-mono font-bold text-xl px-4 cursor-pointer">About</div>
           <div className="text-white font-mono font-bold text-xl px-4 cursor-pointer">FAQ</div>
           <div className="text-white font-mono font-bold text-xl px-4 cursor-pointer">Create-Room</div> 
-          <div className="text-white font-mono font-bold text-xl px-4 cursor-pointer"><FaSignInAlt /></div>
+          <Link href="/user/sign_in">
+            <div className="text-white font-mono font-bold text-xl px-4 cursor-pointer"><FaSignInAlt /></div>
+          </Link>
         </div>
       </div>
       <div className="flex flex-col w-11/12">
@@ -22,7 +25,9 @@ export default function Home() {
                 and having a control over all your friends start/pause a video
                 or even change a video.
               </div>
-              <div className="my-4 px-4 py-2 bg-blue-600 rounded-lg font-mono font-bold text-white w-fit cursor-pointer">Get Started</div>
+              <Link href="/user/sign_up">
+                <div className="my-4 px-4 py-2 bg-blue-600 rounded-lg font-mono font-bold text-white w-fit cursor-pointer">Get Started</div>
+              </Link>
             </div>
           </div>
           <div className="flex flex-col items-center w-1/3 py-10">
@@ -61,12 +66,12 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="flex flex-col w-full items-center bg-gray-700">
-        <div className="flex flex-row w-11/12 flex-wrap justify-between py-10">
-          <div className="flex flex-col items-center w-1/4">
-            <div className="font-mono text-white">facebook</div>
-            <div className="font-mono text-white">twitter</div>
-            <div className="font-mono text-white">instagram</div>
+      <div className="flex flex-col w-full items-center bg-slate-800">
+        <div className="flex flex-row w-11/12 flex-wrap justify-between">
+          <div className="flex flex-row items-center my-5">
+            <div className="font-mono text-white mx-2 text-xl"><FaFacebook /></div>
+            <div className="font-mono text-white mx-2 text-xl"><FaTwitter /></div>
+            <div className="font-mono text-white mx-2 text-xl"><FaInstagram /></div>
           </div>
         </div>
       </div>

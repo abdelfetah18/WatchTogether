@@ -3,8 +3,7 @@ import { useEffect, useState } from "react";
 
 
 export default function Youtube({ url }){
-    var [video_id,setVideoId] = useState("");
-    var [player,setPlayer] = useState({ stopVideo:() => null });
+    var [player,setPlayer] = useState({ stopVideo:() => null, loadVideoById:() => null });
 
     useEffect(() => {
         var tag = document.createElement('script');
@@ -14,6 +13,12 @@ export default function Youtube({ url }){
         window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
     },[]);
+
+    useEffect(() => {
+      var myUrl = new URL(url);
+      var videoId = myUrl.searchParams.get("v");
+      player.loadVideoById(videoId)
+    },[url]);
 
     function onYouTubeIframeAPIReady() {
         var myUrl = new URL(url);

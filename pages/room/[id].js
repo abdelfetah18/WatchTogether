@@ -13,6 +13,7 @@ export async function getServerSideProps({ req, query }){
 
 export default function Room({ room_id }) {
   var [invite_url,setInviteUrl] = useState("https://www.watch-together/invite?id=1fs5s6sd01cs6d84");
+  var [url,setUrl] = useState("https://www.youtube.com/watch?v=aSf_1wm85dQ");
 
   function truncate( str, n, useWordBoundary ){
     if (str.length <= n) { return str; }
@@ -35,7 +36,7 @@ export default function Room({ room_id }) {
         
         <div className="w-full flex-grow flex flex-col items-center justify-center">
           <div className="w-full h-5/6">
-            <Youtube url={"https://www.youtube.com/watch?v=aSf_1wm85dQ"} />
+            <Youtube url={url} />
           </div>
         </div>
       </div>
@@ -47,7 +48,7 @@ export default function Room({ room_id }) {
               <div className="p-2">
                 <img className="w-20 h-20 rounded-full" src="/cover.png" />
               </div>
-              <div className="w-11/12 text-center font-mono text-2xl text-white">{room_id}</div>
+              <div className="w-11/12 text-center font-mono text-base pb-2 text-white">{room_id}</div>
             </div>
             <div className="flex flex-col items-center flex-grow bg-gray-700 rounded-r">
               <div className="w-11/12 flex flex-row items-center flex-wrap py-2">

@@ -49,5 +49,5 @@ permissions:
 	control_video_player
 	remove_members
 	edit_room_info
-
+	
 create-room -> sign_in/sign_up -> choose a name -> upload a profile_image -> invite members -> room_screen.
