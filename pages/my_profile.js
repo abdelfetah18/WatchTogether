@@ -1,15 +1,16 @@
 import { FaCog, FaEllipsisH } from "react-icons/fa";
 
 export async function getServerSideProps({ req, query }){
-    var { username } = query;
+    
+    
     return {
         props:{
-            username
+            username:"Abdelfetah"
         }
     }
 }
 
-export default function App({ username }){
+export default function MyProfile({ username }){
     return(
         <div className="h-screen w-screen bg-gray-900 flex flex-col items-center">
             <div className="w-1/6 bg-white flex flex-col items-center py-4 rounded-b-full">

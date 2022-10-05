@@ -35,15 +35,35 @@ master -> (
 		)
 
 
+user:
+	username
+	email
+	password
+	profile_image
 
 
 room:
 	creator:{}
 	admin:{}
 	members:[]
+	name:""
+	profile_image:""
+
 	
 member:
+	user:{}
 	permissions:[]
+	room:{}
+	join_at:""
+
+messages:
+	room:{}
+	message:""
+	type:""
+	user:{}
+	created_at:""
+
+
 
 permissions:
 	control_video_player
@@ -51,3 +71,24 @@ permissions:
 	edit_room_info
 	
 create-room -> sign_in/sign_up -> choose a name -> upload a profile_image -> invite members -> room_screen.
+
+
+sign_up -> select_image -> profile.
+
+tokens:
+	session
+	setup
+	forget_password
+
+
+
+my_profile:
+	- My Rooms.
+	- Rooms you may like to join.
+	- user_info.
+
+room_page;
+	- room_info.
+	- invite_link.
+	- room_chat.
+
