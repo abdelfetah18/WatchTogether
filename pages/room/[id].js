@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { FaSearch, FaEllipsisH } from "react-icons/fa";
 import Youtube from "../../Components/Youtube";
+import { getData } from "../../database/client";
 
 export async function getServerSideProps({ req, query }){
   var { id:room_id } = query;
+  var room = await getData('*[_type=="room" && _id == $room_id]{ _id,"profile_image":profile_image->asset.url,admin->, creator->, name,"members_count":count(members) }[0]',{ room_id });
+
   return {
     props:{
-      room_id
+      room
     }
   }
 }
 
-export default function Room({ room_id }) {
+export default function Room({ room }) {
   var [invite_url,setInviteUrl] = useState("https://www.watch-together/invite?id=1fs5s6sd01cs6d84");
   var [url,setUrl] = useState("https://www.youtube.com/watch?v=aSf_1wm85dQ");
 
@@ -48,7 +51,7 @@ export default function Room({ room_id }) {
               <div className="p-2">
                 <img className="w-20 h-20 rounded-full" src="/cover.png" />
               </div>
-              <div className="w-11/12 text-center font-mono text-base pb-2 text-white">{room_id}</div>
+              <div className="w-11/12 text-center font-mono text-base pb-2 text-white">{room.name}</div>
             </div>
             <div className="flex flex-col items-center flex-grow bg-gray-700 rounded-r">
               <div className="w-11/12 flex flex-row items-center flex-wrap py-2">
@@ -61,7 +64,7 @@ export default function Room({ room_id }) {
               </div>
               <div className="flex flex-row items-center w-full">
                 <div className="text-white font-mono font-semibold text-base px-2">members:</div>
-                <div className="text-white font-mono text-base px-2">40</div>
+                <div className="text-white font-mono text-base px-2">{room.members_count}</div>
               </div>
             </div>
           </div>
