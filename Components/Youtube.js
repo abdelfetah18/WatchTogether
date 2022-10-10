@@ -11,17 +11,23 @@ export default function Youtube({ url }){
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
         window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
-
+        window.onError = onError;
     },[]);
 
     useEffect(() => {
-      var myUrl = new URL(url);
-      var videoId = myUrl.searchParams.get("v");
-      player.loadVideoById(videoId)
+      if(url.length > 0){
+        var myUrl = new URL(url);
+        var videoId = myUrl.searchParams.get("v");
+        player.loadVideoById(videoId);
+      }
     },[url]);
 
+    function onError(evt){
+      console.log(evt);
+    }
+
     function onYouTubeIframeAPIReady() {
-        var myUrl = new URL(url);
+        var myUrl = new URL("https://www.youtube.com/watch?v=zaVrz32Dxgs");
         var videoId = myUrl.searchParams.get("v");
         var p = new YT.Player('player', {
             height: '390',
@@ -42,7 +48,7 @@ export default function Youtube({ url }){
             'onStateChange': onPlayerStateChange
             }
         });
-        setPlayer(p)
+        setPlayer(p);
     }
 
     // 4. The API will call this function when the video player is ready.

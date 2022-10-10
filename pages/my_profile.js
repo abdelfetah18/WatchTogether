@@ -25,6 +25,7 @@ export default function MyProfile({ user,_user,rooms,rooms_you_may_join }){
                 </div>
                 <div className="font-semibold py-1 text-lg">{_user.username}</div>
             </div>
+            <a href="/user/sign_out"  className="font-semibold py-1 text-lg text-white curs">Logout</a>
             <div className="w-11/12 flex flex-row my-10 py-10 bg-slate-100 flex-grow rounded">
                 <div className="w-1/3 flex flex-col items-center">
                     <div className="font-bold text-xl w-11/12">My Rooms:</div>

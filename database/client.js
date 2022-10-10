@@ -64,7 +64,11 @@ async function uploadImage(filePath){
 
 
 async function clearDatabase(type){
-    var r = await client.delete({ query: '*[_type=="'+type+'"]'});
+    try {
+      var r = await client.delete({ query: '*[_type=="'+type+'"]'});
+    } catch(err){
+      console.log(type,err);
+    }
     return r;
 }
 

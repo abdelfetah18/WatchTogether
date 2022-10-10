@@ -25,7 +25,6 @@ export default function handler(req, res) {
                     status:"success",
                     message:"uploaded successfuly!",
                     data:asset,
-                    //d:data
                 });
             }
         });

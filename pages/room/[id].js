@@ -1,4 +1,5 @@
-import { useState } from "react";
+import axios from "axios";
+import { useEffect, useState } from "react";
 import { FaSearch, FaEllipsisH } from "react-icons/fa";
 import Youtube from "../../Components/Youtube";
 import { getData } from "../../database/client";
@@ -6,17 +7,28 @@ import { getData } from "../../database/client";
 export async function getServerSideProps({ req, query }){
   var { id:room_id } = query;
   var room = await getData('*[_type=="room" && _id == $room_id]{ _id,"profile_image":profile_image->asset.url,admin->, creator->, name,"members_count":count(members) }[0]',{ room_id });
-
-  return {
-    props:{
-      room
+  if(room){
+    return {
+      props:{
+        room
+      }
+    }
+  }else{
+    return {
+      redirect: {
+          destination: '/my_profile',
+          permanent: false
+      }
     }
   }
+  
 }
 
 export default function Room({ room }) {
   var [invite_url,setInviteUrl] = useState("https://www.watch-together/invite?id=1fs5s6sd01cs6d84");
-  var [url,setUrl] = useState("https://www.youtube.com/watch?v=aSf_1wm85dQ");
+  var [url,setUrl] = useState("");
+  var [search,setSearch] = useState("");
+  var [videos,setVideos] =useState([]);
 
   function truncate( str, n, useWordBoundary ){
     if (str.length <= n) { return str; }
@@ -26,6 +38,24 @@ export default function Room({ room }) {
       : subString) + "...";
   }
 
+  useEffect(() => {
+    if(search.length > 0){
+      axios.get("http://127.0.0.1:3000/api/room/youtube_search?q="+search).then(res => {
+        if(res.data.status == "success"){
+          setVideos(res.data.videos);
+        }
+      }).catch(err => {
+        console.log(err);
+      }); 
+    }
+  },[search]);
+
+  useEffect(() => {
+    if(videos.length > 0){
+      setUrl("");
+    }
+  },[videos]);
+
   return (
     <div className="flex flex-row w-screen h-screen items-center">
       <div className="w-3/4 h-full flex flex-col items-center bg-gray-900 py-4">
@@ -33,14 +63,34 @@ export default function Room({ room }) {
           <div className="mx-4 text-white font-bold text-xl">Watch-Together</div>
           <div className="mx-4 flex-grow bg-gray-100 rounded-lg flex flex-row items-center flex-wrap cursor-pointer">
             <FaSearch className="text-base w-1/12 text-gray-400" />
-            <input className="font-mono text-base font-medium bg-gray-100 flex-grow h-full rounded-lg px-4 py-2 focus-visible:outline-none" type="text" placeholder="Search..." />
+            <input value={search} onChange={(evt) => setSearch(evt.target.value)} className="font-mono text-base font-medium bg-gray-100 flex-grow h-full rounded-lg px-4 py-2 focus-visible:outline-none" type="text" placeholder="Search..." />
           </div>
         </div>
         
-        <div className="w-full flex-grow flex flex-col items-center justify-center">
-          <div className="w-full h-5/6">
+        <div className="w-full flex-grow flex flex-col items-center overflow-auto my-4">
+          <div className="w-11/12 flex flex-row flex-wrap my-2">
+            {
+              videos.map((v,index) => {
+                function selectVideo(){
+                  setUrl(v.url);
+                  setSearch("");
+                  setVideos([]);
+                }
+
+                return (
+                  <div key={index} onClick={selectVideo} className="w-1/5 mx-2 my-4 flex flex-col items-center cursor-pointer hover:bg-gray-800 p-2 rounded-lg">
+                    <img className="w-full" src={v.snippet.thumbnails.url} />
+                    <div className="text-white text-sm font-bold py-2 text-ellipsis">{v.title}</div>
+                  </div>
+                )
+              })
+            }
+          </div>
+          
+          <div className={"w-full h-5/6 "+(url.length > 0 ? "" : "hidden")}>
             <Youtube url={url} />
           </div>
+          
         </div>
       </div>
       
