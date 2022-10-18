@@ -1,10 +1,10 @@
 import { FaCog, FaEllipsisH, FaPlus } from "react-icons/fa";
 import { getData } from "../database/client";
 import Link from "next/link";
+import Profile from "../Components/Profile";
 
 export async function getServerSideProps({ req, query }){
     var user_info = req.user_info;
-    
     var _user = await getData('*[_type=="user" && _id == $user_id]{ _id,username,"profile_image":profile_image->asset.url }[0]',{ user_id:user_info.data.user_id });
     var rooms = await getData('*[_type=="room" && $user_id in members[]->user->_id]{ _id,"profile_image":profile_image->asset.url,admin->, creator->, name }',{ user_id:user_info.data.user_id });
     var rooms_you_may_join = await getData('*[_type=="room"]{ _id,admin->, creator->, name,"profile_image":profile_image->asset.url } | order(count(members) desc)',{ user_id:user_info.data.user_id });
@@ -19,19 +19,16 @@ export async function getServerSideProps({ req, query }){
 export default function MyProfile({ user,_user,rooms,rooms_you_may_join }){
     return(
         <div className="h-screen w-screen bg-gray-900 flex flex-col items-center">
-            <div className="w-1/6 bg-white flex flex-col items-center py-4 rounded-b-full">
-                <div>
-                    <img className="h-16 w-16 rounded-full" src={_user.profile_image ? _user.profile_image :"/user.png"} />
-                </div>
-                <div className="font-semibold py-1 text-lg">{_user.username}</div>
-            </div>
+            <Profile user={_user} />
             <a href="/user/sign_out"  className="font-semibold py-1 text-lg text-white curs">Logout</a>
             <div className="w-11/12 flex flex-row my-10 py-4 bg-slate-100 flex-grow rounded">
                 <div className="w-1/3 flex flex-col items-center">
                     <div className="font-bold text-xl w-11/12">My Rooms:</div>
-                    <div className="w-11/12 flex flex-col items-center bg-slate-200 rounded py-4 my-4 cursor-pointer">
-                        <FaPlus className="text-base" />
-                    </div>
+                    <Link href={"/room/create"}>
+                        <div className="w-11/12 flex flex-col items-center bg-slate-200 rounded py-4 my-4 cursor-pointer">
+                            <FaPlus className="text-base" />
+                        </div>
+                    </Link>
                     {
                         rooms.map((room,index) => {
                             return (

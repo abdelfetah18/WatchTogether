@@ -67,7 +67,7 @@ app.prepare().then(() => {
   });
 
   server.use('/', ( req, res, nextR) => {
-    var protected_paths = ['/my_profile'];
+    var protected_paths = ['/my_profile','/room/create'];
     if(protected_paths.includes(req.path)){
       var access_token = req.headers.authorization || req.cookies.access_token;
       if(access_token){
