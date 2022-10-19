@@ -1,4 +1,5 @@
 import axios from "axios";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FaSearch, FaEllipsisH } from "react-icons/fa";
 import Youtube from "../../Components/Youtube";
@@ -6,7 +7,8 @@ import { getData } from "../../database/client";
 
 export async function getServerSideProps({ req, query }){
   var { id:room_id } = query;
-  var room = await getData('*[_type=="room" && _id == $room_id]{ _id,"profile_image":profile_image->asset.url,admin->, creator->, name,"members_count":count(members) }[0]',{ room_id });
+  var user_info = req.user_info.data;
+  var room = await getData('*[_type=="room" && _id == $room_id && ($user_id in members[]->user->_id)]{ _id,"profile_image":profile_image.asset->url,admin->, creator->, name,"members_count":count(members) }[0]',{ room_id,user_id:user_info.user_id });
   if(room){
     return {
       props:{
@@ -24,11 +26,11 @@ export async function getServerSideProps({ req, query }){
   
 }
 
-export default function Room({ room }) {
+export default function Room({ user,room }) {
   var [invite_url,setInviteUrl] = useState("https://www.watch-together/invite?id=1fs5s6sd01cs6d84");
   var [url,setUrl] = useState("");
   var [search,setSearch] = useState("");
-  var [videos,setVideos] =useState([]);
+  var [videos,setVideos] = useState([]);
 
   function truncate( str, n, useWordBoundary ){
     if (str.length <= n) { return str; }
@@ -40,7 +42,11 @@ export default function Room({ room }) {
 
   useEffect(() => {
     if(search.length > 0){
-      axios.get("http://127.0.0.1:3000/api/room/youtube_search?q="+search).then(res => {
+      axios.get("http://127.0.0.1:3000/api/room/youtube_search?q="+search,{
+        headers:{
+          authorization: user.access_token
+        }
+      }).then(res => {
         if(res.data.status == "success"){
           setVideos(res.data.videos);
         }
@@ -60,7 +66,9 @@ export default function Room({ room }) {
     <div className="flex flex-row w-screen h-screen items-center">
       <div className="w-3/4 h-full flex flex-col items-center bg-gray-900 py-4">
         <div className="w-full flex flex-row items-center">
-          <div className="mx-4 text-white font-bold text-xl">Watch-Together</div>
+          <Link href={"/my_profile"}>
+            <div className="mx-4 text-white font-bold text-xl cursor-pointer">Watch-Together</div>
+          </Link>
           <div className="mx-4 flex-grow bg-gray-100 rounded-lg flex flex-row items-center flex-wrap cursor-pointer">
             <FaSearch className="text-base w-1/12 text-gray-400" />
             <input value={search} onChange={(evt) => setSearch(evt.target.value)} className="font-mono text-base font-medium bg-gray-100 flex-grow h-full rounded-lg px-4 py-2 focus-visible:outline-none" type="text" placeholder="Search..." />
@@ -99,7 +107,7 @@ export default function Room({ room }) {
           <div className="flex flex-row w-full py-4">
             <div className="w-1/3 flex flex-col items-center bg-gray-900 rounded-l">
               <div className="p-2">
-                <img className="w-20 h-20 rounded-full" src="/cover.png" />
+                <img className="w-20 h-20 rounded-full" src={room.profile_image ? room.profile_image : "/cover.png"} />
               </div>
               <div className="w-11/12 text-center font-mono text-base pb-2 text-white">{room.name}</div>
             </div>

@@ -20,6 +20,10 @@ client.delete({
 import { basename } from 'path';
 import { createReadStream } from 'fs';
 
+async function deleteData(doc_id){
+  return await client.delete(doc_id);
+}
+
 async function getData(query,params){
   return await client.fetch(query, params);
 }
@@ -73,5 +77,5 @@ async function clearDatabase(type){
 }
 
 export {
-  updateData,getData,addData,uploadProfile,uploadImage,clearDatabase
+  updateData,getData,addData,uploadProfile,uploadImage,clearDatabase,deleteData
 };

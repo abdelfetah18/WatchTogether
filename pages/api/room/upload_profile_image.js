@@ -17,8 +17,9 @@ export default function handler(req, res) {
                     message:"something went wrong!"
                 });
             }else{
-                var user_id = req.user_info.data.user_id;
-                var asset = await uploadProfile(files["profile_image"].filepath,user_id);
+                var room_id = fields.room_id;
+
+                var asset = await uploadProfile(files["profile_image"].filepath,room_id);
 
                 res.status(200).json({
                     status:"success",

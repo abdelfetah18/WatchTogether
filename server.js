@@ -32,6 +32,38 @@ app.prepare().then(() => {
     }
   });
 
+  server.use("/api/room",( req, res, nextR) => {
+    var access_token = req.headers.authorization;
+    if(access_token){
+      var is_valid = crypto.verify("SHA256",new Buffer(access_token.split(".")[0], 'base64'),publicKey,new Buffer(access_token.split(".")[1], 'base64'))
+      var data = JSON.parse((new Buffer(access_token.split(".")[0], 'base64')).toString("ascii"));
+      if(is_valid){
+        req.user_info = data;
+        nextR();
+      }else{
+        res.send("Not authorized!");
+      }
+    }else{
+      res.send("Not authorized!");
+    }
+  });
+
+  server.use("/room",( req, res, nextR) => {
+    var access_token = req.cookies.access_token;
+    if(access_token){
+      var is_valid = crypto.verify("SHA256",new Buffer(access_token.split(".")[0], 'base64'),publicKey,new Buffer(access_token.split(".")[1], 'base64'))
+      var data = JSON.parse((new Buffer(access_token.split(".")[0], 'base64')).toString("ascii"));
+      if(is_valid){
+        req.user_info = data;
+        nextR();
+      }else{
+        res.send("Not authorized!");
+      }
+    }else{
+      res.send("Not authorized!");
+    }
+  });
+
   server.use("/api/user",( req, res, nextR) => {
     var access_token = req.headers.authorization || req.cookies.access_token;
     if(access_token){
