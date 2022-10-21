@@ -97,7 +97,7 @@ export default function MyProfile({ user,_user,rooms,rooms_you_may_join }){
                                     <div className="self-end relative">
                                         <FaEllipsisH onClick={toggleMenu} className="text-zinc-500 h-10 text-xl cursor-pointer" />
                                         <motion.div animate={actionsAnim} className="absolute rounded bg-gray-700 hidden opacity-0 flex-col items-center right-0">
-                                            <div className="px-4 py-1 text-base font-semibold text-white cursor-pointer">edit</div>
+                                            <a href={"/room/"+room._id+"/edit"} className="px-4 py-1 text-base font-semibold text-white cursor-pointer">edit</a>
                                             <div onClick={deleteRoom} className="px-4 py-1 text-base font-semibold text-white cursor-pointer">delete</div>
                                         </motion.div>
                                     </div>

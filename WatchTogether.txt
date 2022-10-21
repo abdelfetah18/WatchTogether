@@ -93,5 +93,16 @@ room_page;
 	- room_chat.
 
 
-//Last
-create room api and front
+
+
+edit profile information:
+	user:
+		- username
+		- email
+		- profile_image
+	room:
+		- name
+		- desription
+		- profile_image
+
+invite to a room link, join a room through invite link
