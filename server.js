@@ -11,9 +11,12 @@ const handle = app.getRequestHandler();
 
 var crypto = require("crypto");
 var { privateKey, publicKey } = require("./module_export_crypto-keys");
+const ws = require('./WebSocket');
 
 app.prepare().then(() => {
   const server = express();
+  var web_socket_server = ws(server);
+
   server.use(cookieParser());
 
   server.get("/user/sign_in",( req, res, nextR) => {

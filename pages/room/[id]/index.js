@@ -1,6 +1,7 @@
 import axios from "axios";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useCookies } from "react-cookie";
 import { FaSearch, FaEllipsisH } from "react-icons/fa";
 import Youtube from "../../../Components/Youtube";
 import { getData } from "../../../database/client";
@@ -30,12 +31,19 @@ export async function getServerSideProps({ req, query }){
 }
 
 export default function Room({ user,_user,room,messages:msgs }) {
+  const [cookies, setCookies, removeCookies] = useCookies(['access_token']);
   var [invite_url,setInviteUrl] = useState("https://www.watch-together/invite?id=1fs5s6sd01cs6d84");
   var [url,setUrl] = useState("");
   var [search,setSearch] = useState("");
   var [videos,setVideos] = useState([]);
   var [messages,setMessages] = useState(msgs);
-  console.log(messages)
+  "".replace
+  useEffect(() => {
+    var ws = new WebSocket("ws://127.0.0.1:4000/?room_id="+room._id+"&access_token="+cookies.access_token.replaceAll("+","-").replaceAll("/","_").replaceAll("=","<"));
+    ws.onopen = (ev) => {
+      console.log("connection opened!",ev)
+    };
+  },[]);
 
   function truncate( str, n, useWordBoundary ){
     if (str.length <= n) { return str; }
