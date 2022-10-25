@@ -10,7 +10,7 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 var crypto = require("crypto");
-var { privateKey, publicKey } = require("./module_export_crypto-keys");
+var { verifyToken } = require("./module_export_crypto-keys");
 const ws = require('./WebSocket');
 
 app.prepare().then(() => {
@@ -19,15 +19,14 @@ app.prepare().then(() => {
 
   server.use(cookieParser());
 
-  server.get("/user/sign_in",( req, res, nextR) => {
+  server.get("/user/sign_in",async ( req, res, nextR) => {
     var access_token = req.headers.authorization || req.cookies.access_token;
     if(access_token){
-      var is_valid = crypto.verify("SHA256",new Buffer(access_token.split(".")[0], 'base64'),publicKey,new Buffer(access_token.split(".")[1], 'base64'))
-      var data = JSON.parse((new Buffer(access_token.split(".")[0], 'base64')).toString("ascii"));
-      if(is_valid){
-        req.user_info = data;
+      try {
+        var is_valid = await verifyToken(access_token);
+        req.user_info = is_valid.payload;
         res.redirect("/my_profile");
-      }else{
+      }catch(err){
         nextR();
       }
     }else{
@@ -35,87 +34,83 @@ app.prepare().then(() => {
     }
   });
 
-  server.use("/api/room",( req, res, nextR) => {
-    var access_token = req.headers.authorization;
-    if(access_token){
-      var is_valid = crypto.verify("SHA256",new Buffer(access_token.split(".")[0], 'base64'),publicKey,new Buffer(access_token.split(".")[1], 'base64'))
-      var data = JSON.parse((new Buffer(access_token.split(".")[0], 'base64')).toString("ascii"));
-      if(is_valid){
-        req.user_info = data;
-        nextR();
-      }else{
-        res.send("Not authorized!");
-      }
-    }else{
-      res.send("Not authorized!");
-    }
-  });
-
-  server.use("/room",( req, res, nextR) => {
-    var access_token = req.cookies.access_token;
-    if(access_token){
-      var is_valid = crypto.verify("SHA256",new Buffer(access_token.split(".")[0], 'base64'),publicKey,new Buffer(access_token.split(".")[1], 'base64'))
-      var data = JSON.parse((new Buffer(access_token.split(".")[0], 'base64')).toString("ascii"));
-      if(is_valid){
-        req.user_info = data;
-        nextR();
-      }else{
-        res.send("Not authorized!");
-      }
-    }else{
-      res.send("Not authorized!");
-    }
-  });
-
-  server.use("/api/user",( req, res, nextR) => {
+  server.use("/api/room",async ( req, res, nextR) => {
     var access_token = req.headers.authorization || req.cookies.access_token;
     if(access_token){
-      var is_valid = crypto.verify("SHA256",new Buffer(access_token.split(".")[0], 'base64'),publicKey,new Buffer(access_token.split(".")[1], 'base64'))
-      var data = JSON.parse((new Buffer(access_token.split(".")[0], 'base64')).toString("ascii"));
-      if(is_valid){
-        req.user_info = data;
+      try {
+        var is_valid = await verifyToken(access_token);
+        req.user_info = is_valid.payload;
         nextR();
-      }else{
-        res.send("Not authorized!");
+      }catch(err){
+        res.redirect("/user/sign_in");
       }
     }else{
-      res.send("Not authorized!");
+      res.redirect("/user/sign_in");
     }
   });
 
-  server.use("/setup",( req, res, nextR) => {
-    var access_token = req.cookies.access_token;
-
+  server.use("/room",async ( req, res, nextR) => {
+    var access_token = req.headers.authorization || req.cookies.access_token;
     if(access_token){
-      var is_valid = crypto.verify("SHA256",new Buffer(access_token.split(".")[0], 'base64'),publicKey,new Buffer(access_token.split(".")[1], 'base64'));
-      var data = JSON.parse((new Buffer(access_token.split(".")[0], 'base64')).toString("ascii"));
-      if(is_valid){
-        req.user_info = data;
+      try {
+        var is_valid = await verifyToken(access_token);
+        req.user_info = is_valid.payload;
         nextR();
-      }else{
-        res.send("Not authorized!");
+      }catch(err){
+        res.redirect("/user/sign_in");
       }
     }else{
-      res.send("Not authorized!");
+      res.redirect("/user/sign_in");    }
+  });
+
+  server.use("/api/user",async ( req, res, nextR) => {
+    var access_token = req.headers.authorization || req.cookies.access_token;
+    if(access_token){
+      try {
+        var is_valid = await verifyToken(access_token);
+        req.user_info = is_valid.payload;
+        nextR();
+      }catch(err){
+        res.redirect("/user/sign_in");      }
+    }else{
+      res.redirect("/user/sign_in");
+    }
+  });
+
+  server.use("/setup",async ( req, res, nextR) => {
+    var access_token = req.cookies.access_token;
+    if(access_token){
+      try {
+        var is_valid = await verifyToken(access_token);
+        req.user_info = is_valid.payload;
+        if(is_valid.payload.type === "setup"){
+          nextR();
+        }else{
+          res.redirect("/my_profile");
+        }
+      }catch(err){
+        res.redirect("/user/sign_in");
+      }
+    }else{
+      res.redirect("/user/sign_in");
     }
     
   });
 
-  server.use('/', ( req, res, nextR) => {
+  server.use('/',async ( req, res, nextR) => {
     var protected_paths = ['/my_profile','/room/create'];
     if(protected_paths.includes(req.path)){
       var access_token = req.headers.authorization || req.cookies.access_token;
       if(access_token){
-        var is_valid = crypto.verify("SHA256",new Buffer(access_token.split(".")[0], 'base64'),publicKey,new Buffer(access_token.split(".")[1], 'base64'))
-        var data = JSON.parse((new Buffer(access_token.split(".")[0], 'base64')).toString("ascii"));
-        if(is_valid){
-          req.user_info = data;
+        try {
+          var is_valid = await verifyToken(access_token);
+          req.user_info = is_valid.payload;
           nextR();
-        }else{
-          res.send("Not authorized!");
+        }catch(err){
+          res.redirect("/user/sign_in");
         }
       }else{
-        res.send("Not authorized!");
+        res.redirect("/user/sign_in");
       }
     }else{
       nextR();

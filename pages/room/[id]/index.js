@@ -1,22 +1,26 @@
 import axios from "axios";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCookies } from "react-cookie";
 import { FaSearch, FaEllipsisH } from "react-icons/fa";
 import Youtube from "../../../Components/Youtube";
+import { generateToken } from "../../../crypto-keys";
 import { getData } from "../../../database/client";
 
 export async function getServerSideProps({ req, query }){
   var { id:room_id } = query;
   var user_info = req.user_info.data;
   var room = await getData('*[_type=="room" && _id == $room_id && ($user_id in members[]->user->_id)]{ _id,"profile_image":profile_image.asset->url,admin->, creator->, name,"members_count":count(members) }[0]',{ room_id,user_id:user_info.user_id });
-  var messages = await getData('*[_type=="messages" && room._ref==$room_id && ($user_id in room->members[]->user->_id)]{"user":user->{ _id,username,"profile_image":@.profile_image.asset->url },message,type,_createdAt }',{ user_id:user_info.user_id, room_id });
+  var messages = await getData('*[_type=="messages" && room._ref==$room_id && ($user_id in room->members[]->user->_id)]{"user":user->{ _id,username,"profile_image":@.profile_image.asset->url },message,type,_createdAt } | order(@._createdAt asc)',{ user_id:user_info.user_id, room_id });
   var _user = await getData('*[_type=="user" && _id == $user_id]{ _id,username,"profile_image":profile_image.asset->url }[0]',{ user_id:user_info.user_id });
+  
+  var payload = { type:"invite",data:{ room_id }};
+  var invite_token = await generateToken(payload);
 
   if(room){
     return {
       props:{
-        room,messages,_user
+        room,messages,_user,invite_token
       }
     }
   }else{
@@ -30,19 +34,41 @@ export async function getServerSideProps({ req, query }){
   
 }
 
-export default function Room({ user,_user,room,messages:msgs }) {
+export default function Room({ user,_user,room,messages:msgs,invite_token }) {
   const [cookies, setCookies, removeCookies] = useCookies(['access_token']);
-  var [invite_url,setInviteUrl] = useState("https://www.watch-together/invite?id=1fs5s6sd01cs6d84");
+  var [invite_url,setInviteUrl] = useState("http://127.0.0.1:3000/room/invite?token="+invite_token);
   var [url,setUrl] = useState("");
   var [search,setSearch] = useState("");
   var [videos,setVideos] = useState([]);
+  var [message,setMessage] = useState("");
   var [messages,setMessages] = useState(msgs);
-  "".replace
+  var inviteDiv = useRef();
+
   useEffect(() => {
     var ws = new WebSocket("ws://127.0.0.1:4000/?room_id="+room._id+"&access_token="+cookies.access_token.replaceAll("+","-").replaceAll("/","_").replaceAll("=","<"));
+    
     ws.onopen = (ev) => {
-      console.log("connection opened!",ev)
+      console.log("connection opened!",ev);
     };
+
+    ws.onmessage = (ev) => {
+      try {
+        var payload = JSON.parse(ev.data);
+        if(payload.target === "chat"){
+          setMessages(state => {
+            return [...state,{ 
+              _createdAt: (new Date()).toString(),
+              user:payload.data.user,
+              message:payload.data.message,
+              type:payload.data.message
+            }]
+          });
+        }
+      }catch(err){
+        ws.close();
+      }
+    }
+    window.ws = ws;
   },[]);
 
   function truncate( str, n, useWordBoundary ){
@@ -74,6 +100,29 @@ export default function Room({ user,_user,room,messages:msgs }) {
       setUrl("");
     }
   },[videos]);
+
+  function sendMessage(){
+    if(window.ws && ws.readyState === ws.OPEN){
+      if(message.length > 0){
+        var data = { target:"chat", room_id:room._id, data:{ type:"text",message } };
+        ws.send(JSON.stringify(data));
+        setMessages(state => {
+          return [...state,{ 
+            _createdAt: (new Date()).toString(),
+            user:_user,
+            message,
+            type:"text"
+          }]
+        });
+        setMessage("");
+      }
+    }
+  }
+
+  function copyInviteUrl(evt){
+    inviteDiv.current.select();
+    navigator.clipboard.writeText(invite_url);
+  }
 
   return (
     <div className="flex flex-row w-screen h-screen items-center">
@@ -141,17 +190,17 @@ export default function Room({ user,_user,room,messages:msgs }) {
           </div>
 
           <div className="w-full flex flex-row items-center">
-            <div className="w-1/4 text-white text-center py-1 bg-green-500 rounded-l-lg font-bold font-mono">invite</div>
-            <div className="w-3/4 bg-gray-700 rounded-r-lg py-1 px-2">{truncate(invite_url,30)}</div>
+            <div onClick={copyInviteUrl} className="cursor-pointer w-1/4 text-white text-center py-1 bg-green-500 rounded-l-lg font-bold font-mono">invite</div>
+            <input ref={inviteDiv} className="w-3/4 bg-gray-700 rounded-r-lg py-1 px-2" value={truncate(invite_url,30)}/>
           </div>
 
-          <div className="relative flex flex-col items-center w-full flex-grow bg-gray-900 rounded-lg my-4">
-            <div className="w-full flex flex-col">
+          <div className="relative flex flex-col items-center w-full flex-grow bg-gray-900 rounded-lg my-4 overflow-auto">
+            <div className="w-full flex flex-col flex-grow overflow-auto py-4">
               {
                 messages.map((m,index) => {
                     if(m.user._id == _user._id){
                       return(
-                        <div key={index} className="flex flex-col pr-2 w-full items-end">
+                        <div key={index} className="flex flex-col pr-2 w-full items-end my-1">
                           <div className="w-2/3 flex flex-row items-center justify-end">
                             <div className="bg-blue-400 rounded-lg rounded-br-none px-2 py-1 font-mono text-white font-semibold text-sm mx-1">{m.message}</div>
                           </div>
@@ -162,7 +211,7 @@ export default function Room({ user,_user,room,messages:msgs }) {
                       )
                     }else{
                       return(
-                        <div key={index} className="flex flex-col w-full items-start">
+                        <div key={index} className="flex flex-col w-full items-start my-1">
                           <div className="w-2/3 flex flex-row items-center">
                             <div className="py-1 px-1">
                               <img className="w-8 h-8 rounded-full" src={m.user.profile_image ? m.user.profile_image : "/user.png"} />
@@ -178,8 +227,8 @@ export default function Room({ user,_user,room,messages:msgs }) {
                 })
               }
             </div>
-            <div className="w-full flex flex-row items-center absolute bottom-0">
-              <input className="px-4 py-2 rounded-lg w-full font-mono" type="text" placeholder="type a message..." />
+            <div className="w-full flex flex-row items-center">
+              <input onKeyDown={(evt) => { if(evt.code === "Enter"){ sendMessage() }}} onChange={(evt) => setMessage(evt.target.value)} value={message} className="px-4 py-2 rounded-lg w-full font-mono" type="text" placeholder="type a message..." />
             </div>
           </div>
         </div>

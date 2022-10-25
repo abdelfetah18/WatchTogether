@@ -66,6 +66,23 @@ async function uploadImage(filePath){
   return { image:imageAsset }
 }
 
+async function addMemberToRoom(room_id,member_id){
+  try {
+    var r = await client.patch(room_id).setIfMissing({ members:[] }).append("members",[{ _type:"reference",_ref:member_id }]).commit({ autoGenerateArrayKeys: true });
+  } catch(err){
+    console.log(err);
+  }
+  return r;
+}
+
+async function removeMemberFromRoom(room_id,member_id){
+  try {
+    var r = await client.patch(room_id).unset(['members[_ref=="'+member_id+'"]']).commit();
+  } catch(err){
+    console.log(err);
+  }
+  return r;
+}
 
 async function clearDatabase(type){
     try {
@@ -77,5 +94,5 @@ async function clearDatabase(type){
 }
 
 export {
-  updateData,getData,addData,uploadProfile,uploadImage,clearDatabase,deleteData
+  updateData,getData,addData,uploadProfile,uploadImage,clearDatabase,deleteData,addMemberToRoom,removeMemberFromRoom
 };

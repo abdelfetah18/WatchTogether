@@ -105,4 +105,10 @@ edit profile information:
 		- desription
 		- profile_image
 
-invite to a room link, join a room through invite link
+
+invite feature:
+	add user who already has an account!
+	send invite_link!
+
+	generate a link
+	

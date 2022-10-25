@@ -1,8 +1,7 @@
 var WebSocket = require("ws");
-var { getData } = require("../database/client_node");
+var { getData,addData } = require("../database/client_node");
 var crypto = require("crypto");
 var { privateKey, publicKey } = require("../module_export_crypto-keys");
-
 
 class Rooms {
     constructor(){
@@ -63,16 +62,26 @@ function createWebSocketServer(server){
                 
                 console.log("total_clients:",ws.clients.size,"new client!");
 
-                client.on("message",(data, isBinary) => {
+                client.on("message",async (data, isBinary) => {
                     try {
                         var payload = JSON.parse(data.toString());
-                        var room = rooms.getRoom(payload.room_id);
+                        console.log(payload);
+                        var room = rooms.getRoom(room_id);
+                        var addToDb = await addData({ _type:"messages",room:{ _type:"reference", _ref:room_id },user:{ _type:"reference", _ref:user_info.data.user_id },message:payload.data.message,type:payload.data.type });
+                        console.log(addToDb);
                         if(room){
-                            room.map((client) => {
-                                client.send(data);
+                            var _user = await getData('*[_type=="user" && _id == $user_id]{ _id,username,"profile_image":profile_image.asset->url }[0]',{ user_id:user_info.data.user_id });
+                            payload.data.user = _user;
+                            room.map((cl) => {
+                                if(payload.target === "chat"){
+                                    if(cl.client_id != user_info.data.user_id){
+                                        cl.send(JSON.stringify(payload));   
+                                    }
+                                }
                             });
                         }
                     } catch(err){
+                        console.log({ err });
                         client.close();
                     }
                 });

@@ -1,6 +1,6 @@
 import { addData, clearDatabase, getData } from "../../../database/client";
 import crypto from "crypto";
-import { privateKey, publicKey } from "../../../crypto-keys";
+import { generateToken } from "../../../crypto-keys";
 
 export default async function handler(req, res) {
     if(req.method == "POST"){
@@ -19,15 +19,12 @@ export default async function handler(req, res) {
                     hash+= "."+salt;
                     var r = await addData({ _type:"user", username, email, password: hash });
                     const token_data = { type:"setup", data:{ user_id:r._id } };
-                    const data = Buffer.from(JSON.stringify(token_data));
-                    const sign = crypto.sign("SHA256", data, privateKey); 
-                    const signature = sign.toString('base64');
-                    const data_b64 = data.toString("base64");
-                    const access_token = data_b64+"."+signature;
+                    var access_token = generateToken(token_data);
                     res.status(200).json({ status:"success", message:"sign_up successfuly!", data:{ token:access_token } });
                 }
             }
         } catch(err){
+            console.log(err);
             res.status(200).json({ status:"error", message: err.CODE,error:err });
         }
     }else{
