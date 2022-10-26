@@ -13,7 +13,7 @@ export async function getServerSideProps({ req, query }){
   var room = await getData('*[_type=="room" && _id == $room_id && ($user_id in members[]->user->_id)]{ _id,"profile_image":profile_image.asset->url,admin->, creator->, name,"members_count":count(members) }[0]',{ room_id,user_id:user_info.user_id });
   var messages = await getData('*[_type=="messages" && room._ref==$room_id && ($user_id in room->members[]->user->_id)]{"user":user->{ _id,username,"profile_image":@.profile_image.asset->url },message,type,_createdAt } | order(@._createdAt asc)',{ user_id:user_info.user_id, room_id });
   var _user = await getData('*[_type=="user" && _id == $user_id]{ _id,username,"profile_image":profile_image.asset->url }[0]',{ user_id:user_info.user_id });
-  
+
   var payload = { type:"invite",data:{ room_id }};
   var invite_token = await generateToken(payload);
 
@@ -42,6 +42,8 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
   var [videos,setVideos] = useState([]);
   var [message,setMessage] = useState("");
   var [messages,setMessages] = useState(msgs);
+  var [player,setPlayer] = useState({ stopVideo:() => null, loadVideoById:() => null });
+  var [player_state,setPlayerState] = useState("init");
   var inviteDiv = useRef();
 
   useEffect(() => {
@@ -64,7 +66,38 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
             }]
           });
         }
+        if(payload.target === "video_player"){
+          var data = payload.data.data;
+          console.log({ url:video_player.getVideoUrl() });
+          var _url = new URL(video_player.getVideoUrl());
+          var old_video_id = _url.searchParams.get("v"); 
+          console.log(data);
+          if(data.video_id === old_video_id){
+            console.log("continue!");
+            switch(data.video_state){
+              case 1:
+                video_player.playVideo();
+                video_player.seekTo(data.currentTime);
+                break;
+              case 2:
+                video_player.pauseVideo();
+                break;
+              case 0:
+                video_player.stopVideo();
+                break;
+              default:
+                console.log("not available!");
+                break;
+            }
+          }else{
+            console.log("new!");
+            setUrl("https://www.youtube.com/watch?v="+data.video_id);
+            video_player.seekTo(data.currentTime);
+          }
+          
+        }
       }catch(err){
+        console.log({ err });
         ws.close();
       }
     }
@@ -124,6 +157,17 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
     navigator.clipboard.writeText(invite_url);
   }
 
+  useEffect(() => {
+    if(window.video_player && video_player.getPlayerState){
+      if(url.length > 0){
+        var myUrl = new URL(url);
+        var video_id = myUrl.searchParams.get("v");
+        var data = { target:"video_player", data:{ action:"update", data: { currentTime:video_player.getCurrentTime(),video_id,video_state: player_state } } };
+        ws.send(JSON.stringify(data));
+      }
+    }
+  },[player_state]);
+
   return (
     <div className="flex flex-row w-screen h-screen items-center">
       <div className="w-3/4 h-full flex flex-col items-center bg-gray-900 py-4">
@@ -158,7 +202,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
           </div>
           
           <div className={"w-full h-5/6 "+(url.length > 0 ? "" : "hidden")}>
-            <Youtube url={url} />
+            <Youtube url={url} p_s={[player_state,setPlayerState]} />
           </div>
           
         </div>
@@ -191,7 +235,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
 
           <div className="w-full flex flex-row items-center">
             <div onClick={copyInviteUrl} className="cursor-pointer w-1/4 text-white text-center py-1 bg-green-500 rounded-l-lg font-bold font-mono">invite</div>
-            <input ref={inviteDiv} className="w-3/4 bg-gray-700 rounded-r-lg py-1 px-2" value={truncate(invite_url,30)}/>
+            <input ref={inviteDiv} className="w-3/4 bg-gray-700 rounded-r-lg py-1 px-2" type="text" value={truncate(invite_url,30)}/>
           </div>
 
           <div className="relative flex flex-col items-center w-full flex-grow bg-gray-900 rounded-lg my-4 overflow-auto">

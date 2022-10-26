@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 
 
 
-export default function Youtube({ url }){
-    var [player,setPlayer] = useState({ stopVideo:() => null, loadVideoById:() => null });
+export default function Youtube({ url, p_s }){
+    var [player_state,setPlayerState] = p_s;
 
     useEffect(() => {
         var tag = document.createElement('script');
@@ -18,12 +18,15 @@ export default function Youtube({ url }){
       if(url.length > 0){
         var myUrl = new URL(url);
         var videoId = myUrl.searchParams.get("v");
-        player.loadVideoById(videoId);
+        if(window.video_player){
+          console.log(video_player)
+          video_player.loadVideoById(videoId);
+        }
       }
     },[url]);
 
     function onError(evt){
-      console.log(evt);
+      console.log({ onError:evt });
     }
 
     function onYouTubeIframeAPIReady() {
@@ -48,23 +51,15 @@ export default function Youtube({ url }){
             'onStateChange': onPlayerStateChange
             }
         });
-        setPlayer(p);
+        window.video_player = p;
     }
 
-    // 4. The API will call this function when the video player is ready.
     function onPlayerReady(event) {
       event.target.playVideo();
     }
 
-    var done = false;
     function onPlayerStateChange(event) {
-      if (event.data == YT.PlayerState.PLAYING && !done) {
-        setTimeout(stopVideo, 6000);
-        done = true;
-      }
-    }
-    function stopVideo() {
-      player.stopVideo();
+      setPlayerState(event.data);
     }
 
     return(

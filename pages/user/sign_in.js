@@ -27,7 +27,7 @@ export default function SignIn(){
 
     return(
         <div className="w-screen h-screen bg-gray-900 flex flex-col items-center justify-center">
-            <div className="w-1/3 py-10 rounded-lg bg-gray-800 shadow shadow-xl flex flex-col items-center">
+            <div className="w-1/3 py-10 rounded-lg bg-gray-800 shadow-xl flex flex-col items-center">
                 <div className="font-bold text-white text-3xl">Watch-Together</div>
                 <div className="w-11/12 flex flex-col items-center my-10">
                 <div className={"w-11/12 rounded text-white text-sm font-semibold font-mono"+(alert.status.length > 0 ? " block py-2 px-4 mb-2": "hidden")+(alert.status == "success" ? " bg-green-500" : " bg-red-500")}>{alert.message}</div>

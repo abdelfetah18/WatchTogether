@@ -1,7 +1,7 @@
 var WebSocket = require("ws");
 var { getData,addData } = require("../database/client_node");
 var crypto = require("crypto");
-var { privateKey, publicKey } = require("../module_export_crypto-keys");
+var { verifyToken } = require("../module_export_crypto-keys");
 
 class Rooms {
     constructor(){
@@ -50,14 +50,21 @@ function createWebSocketServer(server){
         var url = new URL("http://127.0.0.1"+request.url);
         var room_id = url.searchParams.get("room_id");
         var access_token = url.searchParams.get("access_token").replace(/\-/g,"+").replace(/\_/g,"/").replace(/\</g,"=");
-  
-        var is_valid = crypto.verify("SHA256",new Buffer(access_token.split(".")[0], 'base64'),publicKey,new Buffer(access_token.split(".")[1], 'base64'));
-        var user_info = JSON.parse((new Buffer(access_token.split(".")[0], 'base64')).toString("ascii"));
-        console.log({ user_info, is_valid });
+        
+        try {
+            var is_valid = await verifyToken(access_token);
+        } catch(err){
+            client.close();
+        }
+        
+        var user_info = is_valid.payload.data;
+        
+        console.log({ user_info });
+
         if(is_valid){
-            var does_exist = await getData('*[_type=="room" && _id==$room_id && $user_id in members[]->user._ref]',{ room_id,user_id:user_info.data.user_id });
+            var does_exist = await getData('*[_type=="room" && _id==$room_id && $user_id in members[]->user._ref]',{ room_id,user_id:user_info.user_id });
             if(does_exist.length > 0){
-                client.client_id = user_info.data.user_id;
+                client.client_id = user_info.user_id;
                 rooms.joinRoom(room_id,client);
                 
                 console.log("total_clients:",ws.clients.size,"new client!");
@@ -65,20 +72,29 @@ function createWebSocketServer(server){
                 client.on("message",async (data, isBinary) => {
                     try {
                         var payload = JSON.parse(data.toString());
-                        console.log(payload);
                         var room = rooms.getRoom(room_id);
-                        var addToDb = await addData({ _type:"messages",room:{ _type:"reference", _ref:room_id },user:{ _type:"reference", _ref:user_info.data.user_id },message:payload.data.message,type:payload.data.type });
-                        console.log(addToDb);
                         if(room){
-                            var _user = await getData('*[_type=="user" && _id == $user_id]{ _id,username,"profile_image":profile_image.asset->url }[0]',{ user_id:user_info.data.user_id });
+                            var _user = await getData('*[_type=="user" && _id == $user_id]{ _id,username,"profile_image":profile_image.asset->url }[0]',{ user_id:user_info.user_id });
                             payload.data.user = _user;
-                            room.map((cl) => {
-                                if(payload.target === "chat"){
-                                    if(cl.client_id != user_info.data.user_id){
+                            if(payload.target === "chat"){
+                                var addToDb = await addData({ _type:"messages",room:{ _type:"reference", _ref:room_id },user:{ _type:"reference", _ref:user_info.user_id },message:payload.data.message,type:payload.data.type });
+                                room.map((cl) => {
+                                    if(cl.client_id != user_info.user_id){
                                         cl.send(JSON.stringify(payload));   
                                     }
+                                });
+                            }
+                            if(payload.target === "video_player"){
+                                var member_has_access = await getData('*[_type=="member" && _id in *[_type=="room" && $room_id==@._id].members[@->user._ref==$user_id]._ref && "control_video_player" in permissions].user->',{ room_id,user_id:user_info.user_id }); 
+                                console.log(payload,"\n",member_has_access);
+                                if(member_has_access.length > 0){
+                                    room.map((cl) => {
+                                        if(cl.client_id != user_info.user_id){
+                                            cl.send(JSON.stringify(payload));   
+                                        }
+                                    });
                                 }
-                            });
+                            }
                         }
                     } catch(err){
                         console.log({ err });
@@ -87,7 +103,7 @@ function createWebSocketServer(server){
                 });
 
                 client.on("close",( code, reason) => {
-                    rooms.leaveRoom(room_id,user_info.data.user_id);
+                    rooms.leaveRoom(room_id,user_info.user_id);
                     console.log("room_users:",rooms.getRoomUsers(room_id),"client left!");
                 });
 
