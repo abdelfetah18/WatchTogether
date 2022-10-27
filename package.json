@@ -3,9 +3,9 @@
   "private": true,
   "scripts": {
     "dev": "node server.js",
-    "dev:server": "nodemon --ignore pages/ server.js",
+    "dev:server": "nodemon --ignore pages/ --ignore /Components server.js",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js"
+    "start": "set NODE_ENV=production&& node server.js"
   },
   "dependencies": {
     "@sanity/client": "^3.4.1",

@@ -50,15 +50,15 @@ function createWebSocketServer(server){
         var url = new URL("http://127.0.0.1"+request.url);
         var room_id = url.searchParams.get("room_id");
         var access_token = url.searchParams.get("access_token").replace(/\-/g,"+").replace(/\_/g,"/").replace(/\</g,"=");
-        
+
         try {
             var is_valid = await verifyToken(access_token);
         } catch(err){
             client.close();
         }
-        
+
         var user_info = is_valid.payload.data;
-        
+
         console.log({ user_info });
 
         if(is_valid){
@@ -66,8 +66,20 @@ function createWebSocketServer(server){
             if(does_exist.length > 0){
                 client.client_id = user_info.user_id;
                 rooms.joinRoom(room_id,client);
-                
+
                 console.log("total_clients:",ws.clients.size,"new client!");
+
+                var _payload = { target:"video_player", data:{ action:"sync", data: {} } };
+                var _room = rooms.getRoom(room_id);
+                var get_admin = await getData('*[_type=="room" && _id==$room_id && $user_id in members[]->user._ref]{ "admin":admin->{ _id,username,"profile_image":@.profile_image.asset->url } }',{ room_id, user_id: user_info.user_id });
+                if(get_admin.length > 0){
+                  var admin_id = get_admin[0].admin._id;
+                  _room.map((cl) => {
+                      if(cl.client_id != user_info.user_id && cl.client_id === admin_id){
+                          cl.send(JSON.stringify(_payload));
+                      }
+                  });
+                }
 
                 client.on("message",async (data, isBinary) => {
                     try {
@@ -80,17 +92,16 @@ function createWebSocketServer(server){
                                 var addToDb = await addData({ _type:"messages",room:{ _type:"reference", _ref:room_id },user:{ _type:"reference", _ref:user_info.user_id },message:payload.data.message,type:payload.data.type });
                                 room.map((cl) => {
                                     if(cl.client_id != user_info.user_id){
-                                        cl.send(JSON.stringify(payload));   
+                                        cl.send(JSON.stringify(payload));
                                     }
                                 });
                             }
-                            if(payload.target === "video_player"){
-                                var member_has_access = await getData('*[_type=="member" && _id in *[_type=="room" && $room_id==@._id].members[@->user._ref==$user_id]._ref && "control_video_player" in permissions].user->',{ room_id,user_id:user_info.user_id }); 
-                                console.log(payload,"\n",member_has_access);
+                            if(payload.target === "video_player" && payload.data.action !== "sync"){
+                                var member_has_access = await getData('*[_type=="member" && _id in *[_type=="room" && $room_id==@._id].members[@->user._ref==$user_id]._ref && "control_video_player" in permissions].user->',{ room_id,user_id:user_info.user_id });
                                 if(member_has_access.length > 0){
                                     room.map((cl) => {
                                         if(cl.client_id != user_info.user_id){
-                                            cl.send(JSON.stringify(payload));   
+                                            cl.send(JSON.stringify(payload));
                                         }
                                     });
                                 }

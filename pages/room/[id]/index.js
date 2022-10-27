@@ -10,7 +10,7 @@ import { getData } from "../../../database/client";
 export async function getServerSideProps({ req, query }){
   var { id:room_id } = query;
   var user_info = req.user_info.data;
-  var room = await getData('*[_type=="room" && _id == $room_id && ($user_id in members[]->user->_id)]{ _id,"profile_image":profile_image.asset->url,admin->, creator->, name,"members_count":count(members) }[0]',{ room_id,user_id:user_info.user_id });
+  var room = await getData('*[_type=="room" && _id == $room_id && ($user_id in members[]->user->_id)]{ _id,"profile_image":profile_image.asset->url,admin->{ _id,username,"profile_image":@.profile_image.asset->url }, creator->{ _id,username,"profile_image":@.profile_image.asset->url }, name,"members_count":count(members) }[0]',{ room_id,user_id:user_info.user_id });
   var messages = await getData('*[_type=="messages" && room._ref==$room_id && ($user_id in room->members[]->user->_id)]{"user":user->{ _id,username,"profile_image":@.profile_image.asset->url },message,type,_createdAt } | order(@._createdAt asc)',{ user_id:user_info.user_id, room_id });
   var _user = await getData('*[_type=="user" && _id == $user_id]{ _id,username,"profile_image":profile_image.asset->url }[0]',{ user_id:user_info.user_id });
 
@@ -31,25 +31,34 @@ export async function getServerSideProps({ req, query }){
       }
     }
   }
-  
+
 }
 
 export default function Room({ user,_user,room,messages:msgs,invite_token }) {
   const [cookies, setCookies, removeCookies] = useCookies(['access_token']);
   var [invite_url,setInviteUrl] = useState("http://127.0.0.1:3000/room/invite?token="+invite_token);
   var [url,setUrl] = useState("");
+  var [currentVideo,setCurrentVideo] = useState(null);
   var [search,setSearch] = useState("");
   var [videos,setVideos] = useState([]);
   var [message,setMessage] = useState("");
   var [messages,setMessages] = useState(msgs);
-  var [player,setPlayer] = useState({ stopVideo:() => null, loadVideoById:() => null });
-  var [player_state,setPlayerState] = useState("init");
+  var [player,setPlayer] = useState(null);
+  var [web_socket,setWebSocket] = useState(null);
+  var [player_state,setPlayerState] = useState(null);
   var inviteDiv = useRef();
+
+  var [is_player_ready,setPlayerReady] = useState(false);
+  var [recv_payload,setRecvPayload] = useState(null);
+  var [init_payload,setInitPayload] = useState(null);
+
 
   useEffect(() => {
     var ws = new WebSocket("ws://127.0.0.1:4000/?room_id="+room._id+"&access_token="+cookies.access_token.replaceAll("+","-").replaceAll("/","_").replaceAll("=","<"));
-    
+
     ws.onopen = (ev) => {
+      var payload = { target:"video_player", data:{ action:"sync", data:{}}};
+      setInitPayload(payload);
       console.log("connection opened!",ev);
     };
 
@@ -58,7 +67,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
         var payload = JSON.parse(ev.data);
         if(payload.target === "chat"){
           setMessages(state => {
-            return [...state,{ 
+            return [...state,{
               _createdAt: (new Date()).toString(),
               user:payload.data.user,
               message:payload.data.message,
@@ -67,34 +76,13 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
           });
         }
         if(payload.target === "video_player"){
-          var data = payload.data.data;
-          console.log({ url:video_player.getVideoUrl() });
-          var _url = new URL(video_player.getVideoUrl());
-          var old_video_id = _url.searchParams.get("v"); 
-          console.log(data);
-          if(data.video_id === old_video_id){
-            console.log("continue!");
-            switch(data.video_state){
-              case 1:
-                video_player.playVideo();
-                video_player.seekTo(data.currentTime);
-                break;
-              case 2:
-                video_player.pauseVideo();
-                break;
-              case 0:
-                video_player.stopVideo();
-                break;
-              default:
-                console.log("not available!");
-                break;
-            }
-          }else{
-            console.log("new!");
-            setUrl("https://www.youtube.com/watch?v="+data.video_id);
-            video_player.seekTo(data.currentTime);
+          setRecvPayload(payload);
+          if(player && player.getVideoUrl && payload.data.action === "sync"){
+            var _url = new URL(player.getVideoUrl());
+            var video_id = _url.searchParams.get("v");
+            var data = { target:"video_player", data:{ action:"update", data: { currentTime:player.getCurrentTime(),video_id,video_state: player_state } } };
+            ws.send(JSON.stringify(data));
           }
-          
         }
       }catch(err){
         console.log({ err });
@@ -102,17 +90,18 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
       }
     }
     window.ws = ws;
+    setWebSocket(ws);
   },[]);
 
   function truncate( str, n, useWordBoundary ){
     if (str.length <= n) { return str; }
     const subString = str.slice(0, n-1); // the original check
-    return (useWordBoundary 
-      ? subString.slice(0, subString.lastIndexOf(" ")) 
+    return (useWordBoundary
+      ? subString.slice(0, subString.lastIndexOf(" "))
       : subString) + "...";
   }
 
-  useEffect(() => {
+  function searchYoutube(){
     if(search.length > 0){
       axios.get("http://127.0.0.1:3000/api/room/youtube_search?q="+search,{
         headers:{
@@ -124,13 +113,13 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
         }
       }).catch(err => {
         console.log(err);
-      }); 
+      });
     }
-  },[search]);
+  }
 
   useEffect(() => {
     if(videos.length > 0){
-      setUrl("");
+      setCurrentVideo(null);
     }
   },[videos]);
 
@@ -140,7 +129,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
         var data = { target:"chat", room_id:room._id, data:{ type:"text",message } };
         ws.send(JSON.stringify(data));
         setMessages(state => {
-          return [...state,{ 
+          return [...state,{
             _createdAt: (new Date()).toString(),
             user:_user,
             message,
@@ -157,16 +146,6 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
     navigator.clipboard.writeText(invite_url);
   }
 
-  useEffect(() => {
-    if(window.video_player && video_player.getPlayerState){
-      if(url.length > 0){
-        var myUrl = new URL(url);
-        var video_id = myUrl.searchParams.get("v");
-        var data = { target:"video_player", data:{ action:"update", data: { currentTime:video_player.getCurrentTime(),video_id,video_state: player_state } } };
-        ws.send(JSON.stringify(data));
-      }
-    }
-  },[player_state]);
 
   return (
     <div className="flex flex-row w-screen h-screen items-center">
@@ -177,16 +156,20 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
           </Link>
           <div className="mx-4 flex-grow bg-gray-100 rounded-lg flex flex-row items-center flex-wrap cursor-pointer">
             <FaSearch className="text-base w-1/12 text-gray-400" />
-            <input value={search} onChange={(evt) => setSearch(evt.target.value)} className="font-mono text-base font-medium bg-gray-100 flex-grow h-full rounded-lg px-4 py-2 focus-visible:outline-none" type="text" placeholder="Search..." />
+            <input onKeyDown={(evt) => { if(evt.code==="Enter"){ searchYoutube(); }}} value={search} onChange={(evt) => setSearch(evt.target.value)} className="font-mono text-base font-medium bg-gray-100 flex-grow h-full rounded-lg px-4 py-2 focus-visible:outline-none" type="text" placeholder="Search..." />
           </div>
         </div>
-        
+
         <div className="w-full flex-grow flex flex-col items-center overflow-auto my-4">
           <div className="w-11/12 flex flex-row flex-wrap my-2">
             {
               videos.map((v,index) => {
                 function selectVideo(){
-                  setUrl(v.url);
+                  setCurrentVideo({
+                    url:v.url,
+                    currentTime:0,
+                    video_state: 1
+                  });
                   setSearch("");
                   setVideos([]);
                 }
@@ -200,14 +183,14 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
               })
             }
           </div>
-          
-          <div className={"w-full h-5/6 "+(url.length > 0 ? "" : "hidden")}>
-            <Youtube url={url} p_s={[player_state,setPlayerState]} />
+
+          <div className={"w-full h-5/6 "+(currentVideo ? "" : "hidden")}>
+            <Youtube c_v={[currentVideo,setCurrentVideo]} p_r={[is_player_ready,setPlayerReady]} ws={[web_socket,setWebSocket]} r_pay={[recv_payload,setRecvPayload]} i_pay={[init_payload,setInitPayload]} p={[player,setPlayer]} url={url} p_s={[player_state,setPlayerState]} is_admin={room.admin._id === _user._id} />
           </div>
-          
+
         </div>
       </div>
-      
+
       <div className="w-1/4 bg-gray-800 h-full flex flex-col items-center">
         <div className="w-11/12 flex flex-col items-center h-full">
           <div className="flex flex-row w-full py-4">
@@ -235,7 +218,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
 
           <div className="w-full flex flex-row items-center">
             <div onClick={copyInviteUrl} className="cursor-pointer w-1/4 text-white text-center py-1 bg-green-500 rounded-l-lg font-bold font-mono">invite</div>
-            <input ref={inviteDiv} className="w-3/4 bg-gray-700 rounded-r-lg py-1 px-2" type="text" value={truncate(invite_url,30)}/>
+            <input ref={inviteDiv} className="w-3/4 bg-gray-700 rounded-r-lg py-1 px-2" onChange={() => null} type="text" value={truncate(invite_url,30)}/>
           </div>
 
           <div className="relative flex flex-col items-center w-full flex-grow bg-gray-900 rounded-lg my-4 overflow-auto">
@@ -251,7 +234,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
                           <div className="flex flex-row items-center">
                             <div className="font-mono text-white font-semibold text-xs mx-2">{(new Date(m._createdAt)).toLocaleTimeString("en",{ hour:"2-digit",minute:"2-digit"})}</div>
                           </div>
-                        </div>         
+                        </div>
                       )
                     }else{
                       return(
@@ -280,4 +263,3 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
     </div>
   )
 }
-  

@@ -3,6 +3,7 @@ var cookieParser = require('cookie-parser');
 const next = require('next');
 
 const dev = process.env.NODE_ENV !== 'production';
+console.log({ dev,node_env:process.env.NODE_ENV });
 const hostname = 'localhost';
 const port = 3000;
 
@@ -94,7 +95,7 @@ app.prepare().then(() => {
     }else{
       res.redirect("/user/sign_in");
     }
-    
+
   });
 
   server.use('/',async ( req, res, nextR) => {
