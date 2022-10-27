@@ -57,8 +57,6 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
     var ws = new WebSocket("ws://127.0.0.1:4000/?room_id="+room._id+"&access_token="+cookies.access_token.replaceAll("+","-").replaceAll("/","_").replaceAll("=","<"));
 
     ws.onopen = (ev) => {
-      var payload = { target:"video_player", data:{ action:"sync", data:{}}};
-      setInitPayload(payload);
       console.log("connection opened!",ev);
     };
 
@@ -77,12 +75,10 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
         }
         if(payload.target === "video_player"){
           setRecvPayload(payload);
-          if(player && player.getVideoUrl && payload.data.action === "sync"){
-            var _url = new URL(player.getVideoUrl());
-            var video_id = _url.searchParams.get("v");
-            var data = { target:"video_player", data:{ action:"update", data: { currentTime:player.getCurrentTime(),video_id,video_state: player_state } } };
-            ws.send(JSON.stringify(data));
-          }
+        }
+        if(payload.target === "state_ready"){
+          var payload = { target:"video_player", data:{ action:"sync", data:{}}};
+          setInitPayload(payload);
         }
       }catch(err){
         console.log({ err });

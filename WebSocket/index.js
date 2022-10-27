@@ -59,8 +59,6 @@ function createWebSocketServer(server){
 
         var user_info = is_valid.payload.data;
 
-        console.log({ user_info });
-
         if(is_valid){
             var does_exist = await getData('*[_type=="room" && _id==$room_id && $user_id in members[]->user._ref]',{ room_id,user_id:user_info.user_id });
             if(does_exist.length > 0){
@@ -69,21 +67,10 @@ function createWebSocketServer(server){
 
                 console.log("total_clients:",ws.clients.size,"new client!");
 
-                var _payload = { target:"video_player", data:{ action:"sync", data: {} } };
-                var _room = rooms.getRoom(room_id);
-                var get_admin = await getData('*[_type=="room" && _id==$room_id && $user_id in members[]->user._ref]{ "admin":admin->{ _id,username,"profile_image":@.profile_image.asset->url } }',{ room_id, user_id: user_info.user_id });
-                if(get_admin.length > 0){
-                  var admin_id = get_admin[0].admin._id;
-                  _room.map((cl) => {
-                      if(cl.client_id != user_info.user_id && cl.client_id === admin_id){
-                          cl.send(JSON.stringify(_payload));
-                      }
-                  });
-                }
-
                 client.on("message",async (data, isBinary) => {
                     try {
                         var payload = JSON.parse(data.toString());
+                        console.log(payload);
                         var room = rooms.getRoom(room_id);
                         if(room){
                             var _user = await getData('*[_type=="user" && _id == $user_id]{ _id,username,"profile_image":profile_image.asset->url }[0]',{ user_id:user_info.user_id });
@@ -106,12 +93,27 @@ function createWebSocketServer(server){
                                     });
                                 }
                             }
+
+                            if(payload.target === "video_player" && payload.data.action === "sync"){
+                                var _room = rooms.getRoom(room_id);
+                                var get_admin = await getData('*[_type=="room" && _id==$room_id && $user_id in members[]->user._ref]{ "admin":admin->{ _id,username,"profile_image":@.profile_image.asset->url } }',{ room_id, user_id: user_info.user_id });
+                                if(get_admin.length > 0){
+                                    var admin_id = get_admin[0].admin._id;
+                                    _room.map((cl) => {
+                                        if(cl.client_id != user_info.user_id && cl.client_id === admin_id){
+                                            cl.send(JSON.stringify(payload));
+                                        }
+                                    });
+                                }
+                            }
                         }
                     } catch(err){
                         console.log({ err });
                         client.close();
                     }
                 });
+
+                client.send(JSON.stringify({ target:"state_ready",data:{} }));
 
                 client.on("close",( code, reason) => {
                     rooms.leaveRoom(room_id,user_info.user_id);
