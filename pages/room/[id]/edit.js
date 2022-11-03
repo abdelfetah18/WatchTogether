@@ -75,7 +75,7 @@ export default function Edit({ user,room }){
                 </a>
                 <div className="w-5/6 flex flex-col items-center">
                     <div className="flex flex-col items-center relative">
-                        <img className="h-40 w-40 rounded-full object-cover" src={profile_image ? profile_image.url : "/user.png"} />
+                        <img alt="profile_image" className="h-40 w-40 rounded-full object-cover" src={profile_image ? profile_image.url : "/user.png"} />
                         <input onChange={uploadImage} className="hidden" ref={imageInput} type="file" />
                         <div onClick={(evt) => imageInput.current.click()} className="absolute bottom-4 right-2 bg-blue-500 p-2 rounded-full cursor-pointer">
                             <FaCamera className="text-white" />

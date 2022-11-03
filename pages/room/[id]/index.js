@@ -172,7 +172,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
 
                 return (
                   <div key={index} onClick={selectVideo} className="w-1/5 mx-2 my-4 flex flex-col items-center cursor-pointer hover:bg-gray-800 p-2 rounded-lg">
-                    <img className="w-full" src={v.snippet.thumbnails.url} />
+                    <img alt="profile_image" className="w-full" src={v.snippet.thumbnails.url} />
                     <div className="text-white text-sm font-bold py-2 text-ellipsis">{v.title}</div>
                   </div>
                 )
@@ -192,7 +192,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
           <div className="flex flex-row w-full py-4">
             <div className="w-1/3 flex flex-col items-center bg-gray-900 rounded-l">
               <div className="p-2">
-                <img className="w-20 h-20 rounded-full" src={room.profile_image ? room.profile_image : "/cover.png"} />
+                <img alt="profile_image" className="w-20 h-20 rounded-full" src={room.profile_image ? room.profile_image : "/cover.png"} />
               </div>
               <div className="w-11/12 text-center font-mono text-base pb-2 text-white">{room.name}</div>
             </div>
@@ -237,7 +237,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
                         <div key={index} className="flex flex-col w-full items-start my-1">
                           <div className="w-2/3 flex flex-row items-center">
                             <div className="py-1 px-1">
-                              <img className="w-8 h-8 rounded-full" src={m.user.profile_image ? m.user.profile_image : "/user.png"} />
+                              <img alt="profile_image" className="w-8 h-8 rounded-full" src={m.user.profile_image ? m.user.profile_image : "/user.png"} />
                             </div>
                             <div className="bg-zinc-500 rounded-lg rounded-bl-none px-2 py-1 text-center text-slate-200 font-semibold text-sm mx-1">{m.message}</div>
                           </div>

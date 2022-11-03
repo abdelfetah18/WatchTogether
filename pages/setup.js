@@ -75,7 +75,7 @@ export default function Setup({ user, new_access_token }){
                 <div className="w-11/12 flex flex-col items-center">
                     <div className="text-white font-mono">Please chose a image for your profile:</div>
                     <div className="w-40 h-40 flex flex-col items-center relative m-5">
-                        <img className="h-40 w-40 rounded-full" src={profile_image_url.length > 0 ? profile_image_url : "/user.png"} />
+                        <img alt="profile_image" className="h-40 w-40 rounded-full" src={profile_image_url.length > 0 ? profile_image_url : "/user.png"} />
                         <div className="cursor-pointer text-green-500 absolute bottom-0 right-0 h-10 w-10 bg-blue-500 rounded-full flex flex-col items-center justify-center">
                             <input ref={profile_image} onChange={onImageSelected} className="hidden" type={"file"} />
                             <FaCamera onClick={uploadProfileImage} className="text-white" />

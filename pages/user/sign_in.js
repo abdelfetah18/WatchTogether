@@ -37,9 +37,9 @@ export default function SignIn(){
                     <input onChange={(evt) => setPassword(evt.target.value)} className="w-11/12 py-2 px-4 rounded-lg font-semibold bg-gray-700 text-slate-300" type="password" />
                 </div>
                 <div onClick={sign_in} className="text-base font-semibold cursor-pointer py-2 bg-blue-600 rounded-lg text-white w-1/3 text-center">Sign in</div>
-                <Link href="/user/sign_up">
-                    <div className="font-semibold text-sm pt-2 cursor-pointer text-zinc-300">create an account?</div>
-                </Link>
+                
+                <a href="/user/sign_up" className="font-semibold text-sm pt-2 cursor-pointer text-zinc-300">create an account?</a>
+                
             </div>
         </div>
     )

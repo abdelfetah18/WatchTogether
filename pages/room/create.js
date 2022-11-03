@@ -20,6 +20,8 @@ export async function getServerSideProps({ req, query }){
 export default function Create({ user,_user }){
     var [name,setName] = useState("");
     var [description,setDescription] = useState("");
+    var [password,setPassword] = useState("");
+    var [privacy,setPrivacy] = useState("public");
     var [alertMsg,setAlertMsg] = useState({});
     var [created_room,setCreatedRoom] = useState({ _id:null });
     var createRoomAnim = useAnimation();
@@ -36,7 +38,7 @@ export default function Create({ user,_user }){
     },[]);
 
     function createRoom(){
-        axios.post("/api/room/create",{ name,description },{
+        axios.post("/api/room/create",{ name,description,privacy,password },{
             headers:{
                 authorization:user.access_token
             }
@@ -99,7 +101,7 @@ export default function Create({ user,_user }){
             <div className="w-11/12 flex flex-row flex-grow items-center flex-wrap">
                 <motion.div animate={choseImageAnim} className="hidden opacity-0 w-1/2 flex-grow flex-col items-center justify-center my-5">
                     <div className="flex flex-col items-center relative">
-                        <img className="h-40 w-40 rounded-full object-cover" src={profile_image_url.length > 0 ? profile_image_url : "/user.png"} />
+                        <img alt="profile_image" className="h-40 w-40 rounded-full object-cover" src={profile_image_url.length > 0 ? profile_image_url : "/user.png"} />
                         <input className="hidden" ref={imageInput} onChange={uploadImage} type="file" />
                         <div onClick={(evt) => imageInput.current.click()} className="absolute bottom-4 right-2 bg-blue-500 p-2 rounded-full cursor-pointer">
                             <FaCamera className="text-white" />
@@ -120,7 +122,19 @@ export default function Create({ user,_user }){
                 <motion.div animate={createRoomAnim} className="w-1/4 flex-grow flex opacity-1 flex-col items-center justify-center my-5">
                     <div className={"w-1/4 px-4 text-red-600 font-semibold text-sm"+(alertMsg.status ? "" : " hidden")}>{alertMsg.message}</div>
                     <input className="my-2 rounded px-4 py-2 w-1/4" onChange={(evt) => setName(evt.target.value)} value={name} placeholder="room name" />
-                    <input className="my-2 rounded px-4 py-2 w-1/4" onChange={(evt) => setDescription(evt.target.value)} value={description} placeholder="room description" disabled/>
+                    <input className="my-2 rounded px-4 py-2 w-1/4" onChange={(evt) => setDescription(evt.target.value)} value={description} placeholder="room description"/>
+                    <div className="w-1/4 flex flex-row items-center my-2">
+                        <div className="font-bold text-white w-1/3">Room Privacy:</div>
+                        <select className="rounded px-4 py-1 font-semibold" onChange={(evt) => setPrivacy(evt.target.value)} defaultValue={privacy} >
+                            <option value={"public"}>public</option>
+                            <option value={"private"}>private</option>
+                        </select>
+                    </div>
+                    {
+                        privacy === "private" ? (<input className="my-2 rounded px-4 py-2 w-1/4" onChange={(evt) => setPassword(evt.target.value)} value={password} placeholder="room password"/>
+                        ) : ""
+                    }
+
                     <div className="w-11/12 flex flex-col items-center my-4">
                         <div onClick={createRoom} className="text-white font-semibold bg-blue-500 px-4 py-1 cursor-pointer rounded">Next</div>
                     </div>

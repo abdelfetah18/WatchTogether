@@ -69,7 +69,7 @@ export default function RoomBox({ room,_user }){
           <Link href={"/room/"+room._id}>
               <div className="flex-grow flex flex-row items-center">
                   <div className="h-14 w-14">
-                      <img className="h-14 w-14 rounded-full" src={room.profile_image ? room.profile_image :"/cover.png"} />
+                      <img alt="profile_image" className="h-14 w-14 rounded-full" src={room.profile_image ? room.profile_image :"/cover.png"} />
                   </div>
                   <div className="flex flex-col mx-4 flex-grow h-full">
                       <div className="font-bold text-base ">{room.name}</div>
