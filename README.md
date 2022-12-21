@@ -188,8 +188,6 @@ in my database i have four schemas:
 
 ## Images from the app:
 
-## Images from the app 
-
 ![1](https://raw.githubusercontent.com/abdelfetah18/WatchTogether/main/public/1.png)
 ![2](https://raw.githubusercontent.com/abdelfetah18/WatchTogether/main/public/2.png)
 ![3](https://raw.githubusercontent.com/abdelfetah18/WatchTogether/main/public/3.png)
