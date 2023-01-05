@@ -66,7 +66,7 @@ export default function RoomBox({ room,_user }){
 
   return (
       <div className="w-5/6 flex flex-row flex-wrap py-2 border-b-2 items-center my-4 cursor-pointer">
-          <Link href={"/room/"+room._id}>
+          <a href={"/room/"+room._id}>
               <div className="flex-grow flex flex-row items-center">
                   <div className="h-14 w-14">
                       <img alt="profile_image" className="h-14 w-14 rounded-full" src={room.profile_image ? room.profile_image :"/cover.png"} />
@@ -76,7 +76,7 @@ export default function RoomBox({ room,_user }){
                       <div className="font-semibold text-xs text-zinc-400 mx-2">room description</div>
                   </div>
               </div>
-          </Link>
+          </a>
           <div className="self-end relative">
               <FaEllipsisH onClick={toggleMenu} className="text-zinc-500 h-10 text-xl cursor-pointer" />
               <motion.div animate={actionsAnim} className="absolute rounded bg-gray-700 hidden opacity-0 flex-col items-center right-0">
