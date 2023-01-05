@@ -20,7 +20,6 @@ export async function getServerSideProps({ req, query }){
     var payload = { type:"invite", data:{ room_id }};
     var invite_token = await generateToken(payload);
   } catch(err) {
-    console.log("error:", err);
     return {
       redirect: {
           destination: '/my_profile',
@@ -65,7 +64,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
 
 
   useEffect(() => {
-    var ws = new WebSocket("ws://" + (process.env.NODE_ENV === "production" ? host_url : "127.0.0.1:4000") +"/?room_id="+room._id+"&access_token="+cookies.access_token.replaceAll("+","-").replaceAll("/","_").replaceAll("=","<"));
+    var ws = new WebSocket((process.env.NODE_ENV === "production" ? "wss://" + host_url : "ws://" + "127.0.0.1:4000") +"/?room_id="+room._id+"&access_token="+cookies.access_token.replaceAll("+","-").replaceAll("/","_").replaceAll("=","<"));
 
     ws.onopen = (ev) => {
       console.log("connection opened!",ev);
