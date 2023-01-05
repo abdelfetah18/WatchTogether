@@ -36,7 +36,7 @@ export async function getServerSideProps({ req, query }){
 
 export default function Room({ user,_user,room,messages:msgs,invite_token }) {
   const [cookies, setCookies, removeCookies] = useCookies(['access_token']);
-  var [invite_url,setInviteUrl] = useState("http://127.0.0.1:3000/room/invite?token="+invite_token);
+  var [invite_url,setInviteUrl] = useState(window.origin+"/room/invite?token="+invite_token);
   var [url,setUrl] = useState("");
   var [currentVideo,setCurrentVideo] = useState(null);
   var [search,setSearch] = useState("");
@@ -54,7 +54,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
 
 
   useEffect(() => {
-    var ws = new WebSocket("ws://127.0.0.1:4000/?room_id="+room._id+"&access_token="+cookies.access_token.replaceAll("+","-").replaceAll("/","_").replaceAll("=","<"));
+    var ws = new WebSocket("ws://" + (process.env.NODE_ENV === "production" ? window.location.hostname : "127.0.0.1:4000") +"/?room_id="+room._id+"&access_token="+cookies.access_token.replaceAll("+","-").replaceAll("/","_").replaceAll("=","<"));
 
     ws.onopen = (ev) => {
       console.log("connection opened!",ev);
@@ -99,7 +99,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
 
   function searchYoutube(){
     if(search.length > 0){
-      axios.get("http://127.0.0.1:3000/api/room/youtube_search?q="+search,{
+      axios.get("/api/room/youtube_search?q="+search,{
         headers:{
           authorization: user.access_token
         }

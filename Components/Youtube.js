@@ -113,7 +113,7 @@ export default function Youtube({ url, p, p_s, p_r, is_admin=false, i_pay, r_pay
         'playsinline': 0,
         'controls': 1,
         'modestbranding':1,
-        'origin': "http://127.0.0.1:3000",
+        'origin': window.origin,
         'disablekb': is_admin ? 0 : 1,
         'cc_load_policy': 1,
         'fs': 1,

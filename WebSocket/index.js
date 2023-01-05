@@ -47,7 +47,7 @@ function createWebSocketServer(server){
     var rooms = new Rooms();
 
     ws.on("connection",async (client, request) => {
-        var url = new URL("http://127.0.0.1"+request.url);
+        var url = new URL(window.origin+"/"+request.url);
         var room_id = url.searchParams.get("room_id");
         var access_token = url.searchParams.get("access_token").replace(/\-/g,"+").replace(/\_/g,"/").replace(/\</g,"=");
 

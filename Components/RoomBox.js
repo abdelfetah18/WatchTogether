@@ -35,7 +35,7 @@ export default function RoomBox({ room,_user }){
   }
 
   function deleteRoom(){
-      axios.post("http://127.0.0.1:3000/api/room/delete",{ room_id:room._id },{
+      axios.post("/api/room/delete",{ room_id:room._id },{
           headers:{
           authorization: user.access_token
           }
@@ -50,7 +50,7 @@ export default function RoomBox({ room,_user }){
   }
 
   function leaveRoom(){
-      axios.post("http://127.0.0.1:3000/api/room/leave",{ room_id:room._id },{
+      axios.post("/api/room/leave",{ room_id:room._id },{
           headers:{
           authorization: user.access_token
           }
