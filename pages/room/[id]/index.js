@@ -10,15 +10,24 @@ import { getData } from "../../../database/client";
 const host_url = "watch-together-8t3y.onrender.com";
 
 export async function getServerSideProps({ req, query }){
-  var { id:room_id } = query;
-  var user_info = req.user_info.data;
-  var room = await getData('*[_type=="room" && _id == $room_id && ($user_id in members[]->user->_id)]{ _id,"profile_image":profile_image.asset->url,admin->{ _id,username,"profile_image":@.profile_image.asset->url }, creator->{ _id,username,"profile_image":@.profile_image.asset->url }, name,"members_count":count(members) }[0]',{ room_id,user_id:user_info.user_id });
-  var messages = await getData('*[_type=="messages" && room._ref==$room_id && ($user_id in room->members[]->user->_id)]{"user":user->{ _id,username,"profile_image":@.profile_image.asset->url },message,type,_createdAt } | order(@._createdAt asc)',{ user_id:user_info.user_id, room_id });
-  var _user = await getData('*[_type=="user" && _id == $user_id]{ _id,username,"profile_image":profile_image.asset->url }[0]',{ user_id:user_info.user_id });
+  try {
+    var { id:room_id } = query;
+    var user_info = req.user_info.data;
+    var room = await getData('*[_type=="room" && _id == $room_id && ($user_id in members[]->user->_id)]{ _id,"profile_image":profile_image.asset->url,admin->{ _id,username,"profile_image":@.profile_image.asset->url }, creator->{ _id,username,"profile_image":@.profile_image.asset->url }, name,"members_count":count(members) }[0]',{ room_id,user_id:user_info.user_id });
+    var messages = await getData('*[_type=="messages" && room._ref==$room_id && ($user_id in room->members[]->user->_id)]{"user":user->{ _id,username,"profile_image":@.profile_image.asset->url },message,type,_createdAt } | order(@._createdAt asc)',{ user_id:user_info.user_id, room_id });
+    var _user = await getData('*[_type=="user" && _id == $user_id]{ _id,username,"profile_image":profile_image.asset->url }[0]',{ user_id:user_info.user_id });
 
-  var payload = { type:"invite", data:{ room_id }};
-  var invite_token = await generateToken(payload);
-
+    var payload = { type:"invite", data:{ room_id }};
+    var invite_token = await generateToken(payload);
+  } catch(err) {
+    console.log("error:", err);
+    return {
+      redirect: {
+          destination: '/my_profile',
+          permanent: false
+      }
+    }
+  }
   if(room){
     return {
       props:{
