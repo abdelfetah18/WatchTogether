@@ -4,10 +4,9 @@ const next = require('next');
 
 const dev = process.env.NODE_ENV !== 'production';
 console.log({ dev,node_env:process.env.NODE_ENV });
-const hostname = 'localhost';
-const port = 3000;
+const port = parseInt(process.env.PORT, 10) || 3000;
 
-const app = next({ dev, hostname, port });
+const app = next({ dev });
 const handle = app.getRequestHandler();
 
 var crypto = require("crypto");
