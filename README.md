@@ -2,6 +2,8 @@
 
 `Watch-Together` is a small web app that let you watch videos with your friends at the same time, and chat with them. currently it support `Youtube` only.
 
+preview: [https://watch-together-eta6.onrender.com](https://watch-together-eta6.onrender.com)
+
 ## How it works ?
 
 the User Interface build with `NextJS(ReactJS)` and `TaillwindCss`.
