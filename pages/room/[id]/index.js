@@ -7,6 +7,8 @@ import Youtube from "../../../Components/Youtube";
 import { generateToken } from "../../../crypto-keys";
 import { getData } from "../../../database/client";
 
+const host_url = "watch-together-8t3y.onrender.com";
+
 export async function getServerSideProps({ req, query }){
   var { id:room_id } = query;
   var user_info = req.user_info.data;
@@ -36,7 +38,7 @@ export async function getServerSideProps({ req, query }){
 
 export default function Room({ user,_user,room,messages:msgs,invite_token }) {
   const [cookies, setCookies, removeCookies] = useCookies(['access_token']);
-  var [invite_url,setInviteUrl] = useState(window.origin+"/room/invite?token="+invite_token);
+  var [invite_url,setInviteUrl] = useState((process.env.NODE_ENV === "production" ? "https://"+host_url : "http://127.0.0.1:3000")+"/room/invite?token="+invite_token);
   var [url,setUrl] = useState("");
   var [currentVideo,setCurrentVideo] = useState(null);
   var [search,setSearch] = useState("");
@@ -54,7 +56,7 @@ export default function Room({ user,_user,room,messages:msgs,invite_token }) {
 
 
   useEffect(() => {
-    var ws = new WebSocket("ws://" + (process.env.NODE_ENV === "production" ? window.location.hostname : "127.0.0.1:4000") +"/?room_id="+room._id+"&access_token="+cookies.access_token.replaceAll("+","-").replaceAll("/","_").replaceAll("=","<"));
+    var ws = new WebSocket("ws://" + (process.env.NODE_ENV === "production" ? host_url : "127.0.0.1:4000") +"/?room_id="+room._id+"&access_token="+cookies.access_token.replaceAll("+","-").replaceAll("/","_").replaceAll("=","<"));
 
     ws.onopen = (ev) => {
       console.log("connection opened!",ev);

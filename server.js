@@ -126,8 +126,12 @@ app.prepare().then(() => {
       return handle(req, res);
   });
 
-  var my_server = server.listen(port, (err) => {
-      if (err) throw err;
-      console.log(`> Ready on http://localhost:${port}`);
+  server.listen(port, (err) => {
+    if (err) throw err;
+      console.log(`> Ready on http://127.0.0.1:${port}`);
+  }).on("upgrade",( request, socket, head) => {
+      ws.handleUpgrade( request, socket, head, socket => {
+          ws.emit("connection", socket, request);
+      });
   });
 }).catch((err) => console.log('error:',err));

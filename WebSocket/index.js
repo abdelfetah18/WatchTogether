@@ -1,4 +1,4 @@
-var WebSocket = require("ws");
+var ws_server = require("ws");
 var { getData,addData } = require("../database/client_node");
 var crypto = require("crypto");
 var { verifyToken } = require("../module_export_crypto-keys");
@@ -41,7 +41,7 @@ class Rooms {
 }
 
 function createWebSocketServer(server){
-    var ws = new WebSocket.Server({ port:4000 });
+    var ws = process.env.NODE_ENV == "production" ? new ws_server.Server({ noServer: true },() => console.log('websocket server alive!')) : new ws_server.Server({ port:4000 },() => console.log('websocket server alive on port:', 4000));
     console.log("web socket is up!");
 
     var rooms = new Rooms();
